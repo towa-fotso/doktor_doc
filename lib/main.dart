@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:docteur_doc/google_api/g_UI/upload_UI.dart';
 
 void main() {
-  runApp();
+  runApp(const MaterialApp(
+    home: UploadPage(),
+    debugShowCheckedModeBanner: false,
+    title: "Upload Page",
+  ));
+  
 }
 
 
