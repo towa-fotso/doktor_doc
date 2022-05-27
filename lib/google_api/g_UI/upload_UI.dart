@@ -17,6 +17,8 @@ class UploadPage extends StatefulWidget {
 class _UploadPageState extends State<UploadPage> {
   final picker = ImagePicker();
   late Uint8List _imageBytes;
+  GoogleCloudDocumentaiV1ProcessResponse? treatedDoc;
+  GoogleLongrunningOperation? treatedDocs;
   List<Uint8List> multiimages = [];
   List<File> multiimagespath = [];
   List<String> imagesname = [];
@@ -40,7 +42,7 @@ class _UploadPageState extends State<UploadPage> {
     setState(() {
       file = null;
       multiimages.clear();
-      multipleselection = true;
+      //multipleselection = true;
       multiimagespath.clear();
       imagesname.clear();
     });
@@ -69,7 +71,13 @@ class _UploadPageState extends State<UploadPage> {
           // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             // ignore: unnecessary_null_comparison
-            changedisplay(),
+            StatefulBuilder(
+              builder: (BuildContext context,
+                  void Function(void Function()) setState) {
+                return changedisplay();
+              },
+            ),
+            Center(child: _checkUploadingVisibility())
           ],
         ),
         Align(
@@ -103,13 +111,16 @@ class _UploadPageState extends State<UploadPage> {
                       ),
                       onPressed: (() {
                         setState(() {
+                          isUploading = true;
                           multipleselection
                               ? _sendMultipleImage()
                               : _sendImage();
                         });
                       }),
                       child: const Text("Envoyer L'Image"))
-                  : Container(),
+                  : !isUploading
+                      ? Container()
+                      : Center(child: _checkUploadingVisibility()),
               FloatingActionButton(
                 splashColor: const Color.fromARGB(255, 0, 255, 132),
                 foregroundColor: const Color.fromARGB(255, 255, 255, 255),
@@ -130,15 +141,26 @@ class _UploadPageState extends State<UploadPage> {
           .loadString('assets/upload_images/credentials.json')
           .then((json) {
         api = CloudApi(json);
+        jsonCredentials = json;
       });
     }
-    isUploading = true;
-    final response = await api?.save(Imagename, _imageBytes);
+    /*final response = await api?.save(Imagename, _imageBytes);*/
     /*onlinedoclicks.add(GoogleCloudDocumentaiV1GcsDocument(
         gcsUri: response?.downloadLink.toString()));*/
-    singleDocUri = response?.downloadLink.toString();
-    googlelogin(Imagename);
-    isUploading = false;
+    treatedDoc =
+        await treatSingledocument(_imageBytes, Imagename).catchError((e) {
+      Fluttertoast.showToast(
+        msg: "Une Erreur est survenu",
+        textColor: Colors.white,
+        backgroundColor: Colors.redAccent,
+        fontSize: 10.0,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+      );
+      setState(() {
+        isUploading = false;
+      });
+    });
     Fluttertoast.showToast(
       msg: "Image Charger et en cours de traitement",
       textColor: Colors.white,
@@ -147,6 +169,10 @@ class _UploadPageState extends State<UploadPage> {
       toastLength: Toast.LENGTH_LONG,
       gravity: ToastGravity.CENTER,
     );
+    setState(() {
+      isUploading = false;
+    });
+    /*singleDocUri = response?.downloadLink.toString();*/
   }
 
   _sendMultipleImage() async {
@@ -155,52 +181,62 @@ class _UploadPageState extends State<UploadPage> {
           .loadString('assets/upload_images/credentials.json')
           .then((json) {
         api = CloudApi(json);
+        jsonCredentials = json;
       });
     }
-    isUploading = true;
     int counter = 0;
     for (var image in multiimages) {
-      final response = await api?.save(imagesname[counter], image);
+      final response =
+          await api?.save(imagesname[counter], image).catchError((e) {
+        Fluttertoast.showToast(
+          msg: imagesname[counter] + "Non charger",
+          textColor: Colors.white,
+          backgroundColor: const Color.fromARGB(255, 244, 2, 2),
+          fontSize: 10.0,
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+        );
+      });
       onlinedoclicks.add(GoogleCloudDocumentaiV1GcsDocument(
           gcsUri: response?.downloadLink.toString()));
       counter++;
     }
     counter = 0;
-    isUploading = false;
-    if (onlinedoclicks.isEmpty) {
+    treatedDocs = await treatMultipledocument().catchError((e) {
       Fluttertoast.showToast(
-        msg: "Echec de chargement",
+        msg: "Echec lors du Traitement",
         textColor: Colors.white,
         backgroundColor: const Color.fromARGB(255, 244, 2, 2),
         fontSize: 10.0,
-        toastLength: Toast.LENGTH_SHORT,
+        toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.CENTER,
       );
-    } else {
-      Fluttertoast.showToast(
-        msg: "Images Charger avec success",
-        textColor: Colors.white,
-        backgroundColor: Colors.greenAccent,
-        fontSize: 10.0,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-      );
-      setState(() {
-        onlinedoclicks.clear();
-        multiimages.clear();
-        multiimagespath.clear();
-        imagesname.clear();
-      });
-    }
+    });
+    Fluttertoast.showToast(
+      msg: "Images Charger avec success",
+      textColor: Colors.white,
+      backgroundColor: Colors.greenAccent,
+      fontSize: 10.0,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+    );
+    setState(() {
+      isUploading = false;
+      onlinedoclicks.clear();
+      multiimages.clear();
+      multiimagespath.clear();
+      imagesname.clear();
+    });
   }
 
-  _checkUploadingVisibility() {
-    isUploading
-        ? const CircularProgressIndicator(
-            value: 5.0,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.greenAccent),
-          )
-        : null;
+  Widget _checkUploadingVisibility() {
+    if (isUploading) {
+      return const CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+      );
+    } else {
+      return Container();
+    }
   }
 
   Future<List<Uint8List>> pickmultipleImages() async {
@@ -240,6 +276,7 @@ class _UploadPageState extends State<UploadPage> {
     final nameEditor = TextEditingController(text: defaultname);
     return Material(
       child: Card(
+          color: Colors.blueAccent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
             side: const BorderSide(color: Colors.blueAccent),
@@ -251,7 +288,7 @@ class _UploadPageState extends State<UploadPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 FadeInImage(
-                    fit: BoxFit.fill,
+                    fit: BoxFit.cover,
                     placeholder:
                         const AssetImage("assets/upload_images/no_user.jpg"),
                     image: FileImage(image)),
@@ -280,20 +317,16 @@ class _UploadPageState extends State<UploadPage> {
 
   Widget changedisplay() {
     if (file != null) {
-      return Expanded(
-        child: Stack(
-          children: [
-            Image.file(
-              file,
-              filterQuality: FilterQuality.high,
-              fit: BoxFit.fill,
-            ),
-            Align(
-                alignment: Alignment.bottomCenter,
-                child: _checkUploadingVisibility()),
-          ],
-        ),
-      );
+      return Container(
+          height: MediaQuery.of(context).size.height / 1.5,
+          width: MediaQuery.of(context).size.width,
+          decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.blueAccent,
+              ),
+              borderRadius: const BorderRadius.all(Radius.circular(20)),
+              image: DecorationImage(image: FileImage(file), fit: BoxFit.fill)),
+          child: null);
     } else if (multiimagespath.isNotEmpty) {
       return Container(
         height: MediaQuery.of(context).size.height,

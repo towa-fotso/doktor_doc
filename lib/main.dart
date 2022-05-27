@@ -5,9 +5,6 @@ void main() {
   runApp(const MaterialApp(
     home: UploadPage(),
     debugShowCheckedModeBanner: false,
-    title: "Upload Page",
+    title: "Docteur Doc",
   ));
-  
 }
-
-

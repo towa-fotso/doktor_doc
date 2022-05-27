@@ -73,6 +73,7 @@ flutter:
   assets:
     - assets/upload_images/
     - assets/upload_images/credentials.json
+    - assets/upload_images/ClientViaService.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

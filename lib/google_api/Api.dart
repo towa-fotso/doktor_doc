@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:gcloud/storage.dart';
 import 'package:mime/mime.dart';
 import 'package:googleapis/documentai/v1.dart';
-import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
+import 'dart:io';
 
 class data {
   final key, value;
@@ -23,11 +22,11 @@ class data {
 String bucketname = "test_buket";
 List<String> bucketlistings = [];
 List decodedContent = [];
+String jsonCredentials = "";
 
 class CloudApi {
   final auth.ServiceAccountCredentials _credentials;
   auth.AutoRefreshingAuthClient? _client;
-
   CloudApi(String json)
       : _credentials = auth.ServiceAccountCredentials.fromJson(json);
 
@@ -43,9 +42,9 @@ class CloudApi {
     // ignore: todo
     //TODO Instantiate objects to cloud storage
     var storage = Storage(_client!, 'Doktor-doc');
-    
-   /// Checking if the bucket exists and if it doesn't it creates it.
-  /*  bool checkbucket = await storage.bucketExists(bucketname);
+
+    /// Checking if the bucket exists and if it doesn't it creates it.
+    /*  bool checkbucket = await storage.bucketExists(bucketname);
 
     if (!checkbucket) {
       storage.createBucket(bucketname,predefinedAcl: PredefinedAcl.private);
@@ -54,7 +53,6 @@ class CloudApi {
     }
     */
     var bucket = storage.bucket(bucketname);
-  
 
     //This will be used to retrieve all the bucket's listing in an attempt to download the user's required info from batch processes.
     /*List bucketListing = await bucket.list().toList();
@@ -76,92 +74,89 @@ class CloudApi {
   }
 }
 
-googlelogin(String name) async {
-  var _currentUser;
-  final googleSignIn = GoogleSignIn(scopes: [DocumentApi.cloudPlatformScope]);
-  bool signedIn = await googleSignIn.isSignedIn();
-  if (!signedIn) {
-    googleSignIn.signIn();
-    googleSignIn.onCurrentUserChanged.listen((account) {
-      /* setState(() {
-
-    });*/
-      _currentUser = account;
-    });
-    if (_currentUser != null) {
-      treatdocument(googleSignIn, name);
-    }
-  } else {
-    treatdocument(googleSignIn, name);
-  }
-}
-
 List<GoogleCloudDocumentaiV1GcsDocument> onlinedoclicks = [];
 String? singleDocUri = "";
-Future<GoogleCloudDocumentaiV1Document?> treatdocument(
-    GoogleSignIn googleSignIn, String name) async {
-  final authClient = await googleSignIn.authenticatedClient();
-  final docApi = DocumentApi(authClient!);
 
-  //docApi.operations;
+Future<GoogleCloudDocumentaiV1ProcessResponse> treatSingledocument(
+    Uint8List imgByte, String name) async {
+  final auth.AutoRefreshingAuthClient httpClient;
+  var credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
+
+  var scopes = [DocumentApi.cloudPlatformScope];
+
+  httpClient = await auth.clientViaServiceAccount(credentials, scopes);
+
+  String processorpath =
+      "projects/doktor-doc-346016/locations/us/processors/bf63f8e2d6549283";
+
+  final docApi = DocumentApi(httpClient);
+
   //Single file proccess setup
+  GoogleCloudDocumentaiV1Document singledoc;
+  singledoc = GoogleCloudDocumentaiV1Document(
+    content: base64Encode(imgByte).toString(),
+    mimeType: lookupMimeType(name),
+  );
 
-  if (onlinedoclicks.isEmpty) {
-    GoogleCloudDocumentaiV1Document singledoc;
-    singledoc = GoogleCloudDocumentaiV1Document(
-      content: name,
-      mimeType: lookupMimeType(name),
-      uri: singleDocUri,
-    );
-    GoogleCloudDocumentaiV1ProcessRequest request;
-    request = GoogleCloudDocumentaiV1ProcessRequest(inlineDocument: singledoc);
-    GoogleCloudDocumentaiV1Document responsedoc;
-    responsedoc = GoogleCloudDocumentaiV1Document();
+  GoogleCloudDocumentaiV1Processor documentaiV1Processor;
+  documentaiV1Processor = await docApi.projects.locations.processors
+      .get(processorpath)
+      .catchError((e) => print(e));
+  print(documentaiV1Processor.displayName);
+  GoogleCloudDocumentaiV1ProcessRequest request;
+  request = GoogleCloudDocumentaiV1ProcessRequest(
+      inlineDocument: singledoc, skipHumanReview: true);
+  GoogleCloudDocumentaiV1ProcessResponse response;
+  response = await docApi.projects.locations.processors
+      .process(request, processorpath)
+      .catchError((e) => print(e));
+  print(response.document?.text);
 
-    GoogleCloudDocumentaiV1ProcessResponse response;
+  return response;
+}
 
-    response = GoogleCloudDocumentaiV1ProcessResponse(document: responsedoc);
-    if (response.document != null) {
-      return response.document;
-    } else {
-      Timer.periodic(const Duration(seconds: 30),
-          <GoogleCloudDocumentaiV1Document>(Timer available) {
-        if (response.document != null) {
-          available.cancel();
-          return response.document;
-        }
-      });
-    }
-  } else {
-    GoogleCloudDocumentaiV1DocumentOutputConfigGcsOutputConfig outputConfig;
+Future<GoogleLongrunningOperation> treatMultipledocument() async {
+  final auth.AutoRefreshingAuthClient httpClient;
+  var credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
 
-    //Batch Files proccess setup
-    GoogleCloudDocumentaiV1BatchDocumentsInputConfig config;
+  var scopes = [DocumentApi.cloudPlatformScope];
 
-    outputConfig = GoogleCloudDocumentaiV1DocumentOutputConfigGcsOutputConfig(
-        gcsUri: "gs://.$bucketname");
+  httpClient = await auth.clientViaServiceAccount(credentials, scopes);
 
-    GoogleCloudDocumentaiV1DocumentOutputConfig batchoutputconf;
+  String processorpath =
+      "projects/doktor-doc-346016/locations/us/processors/bf63f8e2d6549283";
 
-    batchoutputconf = GoogleCloudDocumentaiV1DocumentOutputConfig(
-        gcsOutputConfig: outputConfig);
+  final docApi = DocumentApi(httpClient);
 
-    GoogleCloudDocumentaiV1GcsDocuments docsonline;
+  GoogleCloudDocumentaiV1DocumentOutputConfigGcsOutputConfig outputConfig;
 
-    docsonline = GoogleCloudDocumentaiV1GcsDocuments(documents: onlinedoclicks);
+  //Batch Files proccess setup
+  GoogleCloudDocumentaiV1BatchDocumentsInputConfig config;
 
-    config = GoogleCloudDocumentaiV1BatchDocumentsInputConfig(
-        gcsDocuments: docsonline);
+  outputConfig = GoogleCloudDocumentaiV1DocumentOutputConfigGcsOutputConfig(
+      gcsUri: "gs://.$bucketname");
 
-    GoogleCloudDocumentaiV1BatchProcessRequest batchproccessReq;
+  GoogleCloudDocumentaiV1DocumentOutputConfig batchoutputconf;
 
-    batchproccessReq = GoogleCloudDocumentaiV1BatchProcessRequest(
-      inputDocuments: config,
-      skipHumanReview: true,
-      documentOutputConfig: batchoutputconf,
-    );
-  }
-  return null;
-  /*GoogleCloudDocumentaiV1DocumentPageFormField formField;
-  formField = GoogleCloudDocumentaiV1DocumentPageFormField();*/
+  batchoutputconf = GoogleCloudDocumentaiV1DocumentOutputConfig(
+      gcsOutputConfig: outputConfig);
+
+  GoogleLongrunningOperation batchOp;
+  GoogleCloudDocumentaiV1GcsDocuments docsonline;
+
+  docsonline = GoogleCloudDocumentaiV1GcsDocuments(documents: onlinedoclicks);
+
+  config = GoogleCloudDocumentaiV1BatchDocumentsInputConfig(
+      gcsDocuments: docsonline);
+  GoogleCloudDocumentaiV1BatchProcessRequest batchproccessReq;
+
+  batchproccessReq = GoogleCloudDocumentaiV1BatchProcessRequest(
+    inputDocuments: config,
+    skipHumanReview: true,
+    documentOutputConfig: batchoutputconf,
+  );
+  batchOp = await docApi.projects.locations.processors
+      .batchProcess(batchproccessReq, processorpath);
+
+  return batchOp;
 }
