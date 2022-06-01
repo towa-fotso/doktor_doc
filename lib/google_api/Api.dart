@@ -5,23 +5,13 @@ import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:gcloud/storage.dart';
 import 'package:mime/mime.dart';
 import 'package:googleapis/documentai/v1.dart';
-import 'dart:io';
 
-class data {
-  final key, value;
-
-  data({this.key, this.value});
-  factory data.fromJson(Map<String, dynamic> jsonData) {
-    return data(
-      key: jsonData['key'],
-      value: jsonData['value'],
-    );
-  }
-}
 
 String bucketname = "test_buket";
-List<String> bucketlistings = [];
-List decodedContent = [];
+String resultSpace = "data";
+String imageSpaces = "images";
+List<String>? bucketlistings = [];
+List BactchOpResults = [];
 String jsonCredentials = "";
 
 class CloudApi {
@@ -44,15 +34,14 @@ class CloudApi {
     var storage = Storage(_client!, 'Doktor-doc');
 
     /// Checking if the bucket exists and if it doesn't it creates it.
-    /*  bool checkbucket = await storage.bucketExists(bucketname);
+    bool checkbucket = await storage.bucketExists("$bucketname/$imageSpaces");
 
     if (!checkbucket) {
-      storage.createBucket(bucketname,predefinedAcl: PredefinedAcl.private);
       storage.createBucket(bucketname+"/images",predefinedAcl: PredefinedAcl.private);
-      storage.createBucket(bucketname+"/data",predefinedAcl: PredefinedAcl.private);
+      //storage.createBucket(bucketname+"/data",predefinedAcl: PredefinedAcl.private);
     }
-    */
-    var bucket = storage.bucket(bucketname);
+    print("$bucketname/$imageSpaces");
+    var bucket = storage.bucket("$bucketname/$imageSpaces");
 
     //This will be used to retrieve all the bucket's listing in an attempt to download the user's required info from batch processes.
     /*List bucketListing = await bucket.list().toList();
@@ -95,7 +84,10 @@ Future<GoogleCloudDocumentaiV1ProcessResponse> treatSingledocument(
   GoogleCloudDocumentaiV1Document singledoc;
   singledoc = GoogleCloudDocumentaiV1Document(
     content: base64Encode(imgByte).toString(),
-    mimeType: lookupMimeType(name),
+    mimeType:
+
+        /// A function that returns the mime type of the file.
+        lookupMimeType(name),
   );
 
   GoogleCloudDocumentaiV1Processor documentaiV1Processor;
@@ -110,7 +102,7 @@ Future<GoogleCloudDocumentaiV1ProcessResponse> treatSingledocument(
   response = await docApi.projects.locations.processors
       .process(request, processorpath)
       .catchError((e) => print(e));
-  print(response.document?.text);
+  //print(response.document?.text);
 
   return response;
 }
@@ -133,16 +125,16 @@ Future<GoogleLongrunningOperation> treatMultipledocument() async {
   //Batch Files proccess setup
   GoogleCloudDocumentaiV1BatchDocumentsInputConfig config;
 
+  GoogleLongrunningOperation batchOp;
+  GoogleCloudDocumentaiV1GcsDocuments docsonline;
+
   outputConfig = GoogleCloudDocumentaiV1DocumentOutputConfigGcsOutputConfig(
-      gcsUri: "gs://.$bucketname");
+      gcsUri: "gs://$bucketname/$resultSpace");
 
   GoogleCloudDocumentaiV1DocumentOutputConfig batchoutputconf;
 
   batchoutputconf = GoogleCloudDocumentaiV1DocumentOutputConfig(
       gcsOutputConfig: outputConfig);
-
-  GoogleLongrunningOperation batchOp;
-  GoogleCloudDocumentaiV1GcsDocuments docsonline;
 
   docsonline = GoogleCloudDocumentaiV1GcsDocuments(documents: onlinedoclicks);
 
@@ -157,6 +149,43 @@ Future<GoogleLongrunningOperation> treatMultipledocument() async {
   );
   batchOp = await docApi.projects.locations.processors
       .batchProcess(batchproccessReq, processorpath);
-
   return batchOp;
+}
+
+Future<List<String>?> retrieveProccessedData() async {
+  final auth.ServiceAccountCredentials _credentials;
+  auth.AutoRefreshingAuthClient? _client;
+  _credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
+
+  // ignore: todo
+  //TODO Create a client
+  _client ??= await auth.clientViaServiceAccount(_credentials, Storage.SCOPES);
+
+  // ignore: todo
+  //TODO Instantiate objects to cloud storage
+  var storage = Storage(_client, 'Doktor-doc');
+
+  /// Checking if the bucket exists and if it doesn't it creates it.
+  bool checkbucket = await storage.bucketExists("$bucketname/$resultSpace");
+  print("Here");
+
+  if (!checkbucket) {
+    //storage.createBucket(bucketname+"/images",predefinedAcl: PredefinedAcl.private);
+    storage.createBucket(bucketname + "/data",
+        predefinedAcl: PredefinedAcl.private);
+  }
+
+//Retrieve Root Bucket
+  var bucket = storage.bucket("$bucketname/$resultSpace");
+
+  //This will be used to retrieve all the bucket's listing in an attempt to download the user's required info from batch processes.
+  List bucketListing = await bucket.list().toList();
+  bucketlistings = bucketListing as List<String>;
+  print(bucketlistings);
+  return bucketlistings;
+  /*Stream bucketcontent = bucket.read("");
+    final decodedContent = await json.decode(bucketcontent.toString());
+    print(decodedContent);
+    BactchOpResults = decodedContent["text"];
+    print(BactchOpResults);*/
 }
