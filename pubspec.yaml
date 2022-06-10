@@ -45,6 +45,10 @@ dependencies:
   curved_navigation_bar: ^1.0.3
   custom_navigator: ^0.3.0
   shared_preferences: ^2.0.15
+  excel: ^2.0.0-null-safety-3
+  path_provider: ^2.0.10
+  simple_animations: ^4.0.2
+  open_file: ^3.2.1
   
 
 dev_dependencies:

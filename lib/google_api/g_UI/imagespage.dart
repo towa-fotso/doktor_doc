@@ -3,23 +3,25 @@ import 'package:docteur_doc/google_api/systemEvents.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:docteur_doc/google_api/excelOps.dart';
+import 'package:googleapis/documentai/v1.dart';
 
-class Datapage extends StatefulWidget {
-  const Datapage({Key? key}) : super(key: key);
+class ImagePage extends StatefulWidget {
+  const ImagePage({Key? key}) : super(key: key);
 
   @override
-  State<Datapage> createState() => _DatapageState();
+  State<ImagePage> createState() => _ImagePageState();
 }
 
-class _DatapageState extends State<Datapage> {
+class _ImagePageState extends State<ImagePage> {
+  GoogleCloudDocumentaiV1ProcessResponse? treatedDoc;
   Future<List<String>?>? bucketcontent;
-  bool download = false;
+  bool process = false;
   bool deleting = false;
 
   @override
   void initState() {
     super.initState();
-    bucketcontent = retrieveProccessedData();
+    bucketcontent = retrieveLoadedImages();
   }
 
   @override
@@ -41,7 +43,7 @@ class _DatapageState extends State<Datapage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
                   Icon(Icons.notifications),
-                  Text("Votre Espace donnees est vide"),
+                  Text("Votre Espace Images est vide"),
                 ],
               );
             } else {
@@ -64,7 +66,7 @@ class _DatapageState extends State<Datapage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
                     Icon(Icons.cloud_off_outlined),
-                    Text("Echec de chargement des Donnees"),
+                    Text("Echec de chargement des Images"),
                   ],
                 ));
           }
@@ -79,7 +81,7 @@ class _DatapageState extends State<Datapage> {
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
                 ),
                 Text(
-                  "Nous recuperons vos donnees",
+                  "Nous recuperons vos images",
                   style: TextStyle(
                     color: Colors.white,
                     fontStyle: FontStyle.italic,
@@ -93,9 +95,10 @@ class _DatapageState extends State<Datapage> {
   }
 
   Widget _checkdownloadingVisibility() {
-    if (download) {
+    if (process) {
       return const Center(
         child: CircularProgressIndicator(
+          strokeWidth: 2.0,
           //backgroundColor: Colors.white60,
           valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
         ),
@@ -122,7 +125,6 @@ class _DatapageState extends State<Datapage> {
     return StatefulBuilder(
       builder: (BuildContext context, void Function(void Function()) setState) {
         String displaydataname = data.split('/').last;
-        //print(data);
         return Container(
           decoration: const BoxDecoration(color: Colors.white),
           child: Card(
@@ -134,7 +136,7 @@ class _DatapageState extends State<Datapage> {
             child: Stack(children: [
               const Center(
                 child: Icon(
-                  Icons.file_present_outlined,
+                  Icons.image,
                   size: 150,
                 ),
               ),
@@ -159,31 +161,25 @@ class _DatapageState extends State<Datapage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        IconButton(
-                            onPressed: (() {}),
-                            icon: const Icon(Icons.storage,
-                                color: Colors.blueAccent)),
-                        !download
+                        !process
                             ? IconButton(
-                                tooltip:
-                                    "Cliquer Pour telecharger le document et le Convertir",
+                                tooltip: "Cliquer pour scanner le document",
                                 splashColor: Colors.greenAccent,
                                 splashRadius: 5,
                                 onPressed: (() async {
                                   playpressedVibration();
                                   playpressedSound();
-                                  String text;
                                   setState(() {
-                                    download = true;
+                                    process = true;
                                   });
-                                  await downloadfile(data, displaydataname);
-                                  //dialog(context: context, batchtext: text);
+                                  treatedDoc =
+                                      await treatClouddocument(displaydataname);
 
                                   setState(() {
-                                    download = false;
+                                    process = false;
                                   });
                                 }),
-                                icon: const Icon(Icons.download,
+                                icon: const Icon(Icons.document_scanner,
                                     color: Colors.blueAccent))
                             : _checkdownloadingVisibility(),
                         !deleting
@@ -199,11 +195,12 @@ class _DatapageState extends State<Datapage> {
                                   setState(() {
                                     deleting = true;
                                   });
-                                  result = await deleteFile(data, false);
-                                  setState(() {});
+                                  result = await deleteFile(data, true);
+
                                   setState(() {
                                     deleting = false;
                                   });
+                                  setState(() {});
                                 }),
                                 icon: const Icon(Icons.delete_forever,
                                     color: Colors.blueAccent))

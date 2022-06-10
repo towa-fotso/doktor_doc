@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:docteur_doc/google_api/excelOps.dart';
 import 'package:docteur_doc/google_api/systemEvents.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -19,12 +21,12 @@ class UploadPage extends StatefulWidget {
 class _UploadPageState extends State<UploadPage> {
   final picker = ImagePicker();
   late Uint8List _imageBytes;
-  GoogleCloudDocumentaiV1ProcessResponse? treatedDoc;
+  //GoogleCloudDocumentaiV1ProcessResponse? treatedDoc;
   GoogleLongrunningOperation? treatedDocs;
   List<Uint8List> multiimages = [];
   List<File> multiimagespath = [];
   List<String> imagesname = [];
-  List<String>? imagesResults = [];
+
   bool imageloading = false;
   bool multipleselection = false;
   String Imagename = "";
@@ -95,12 +97,8 @@ class _UploadPageState extends State<UploadPage> {
                     child: const Icon(Icons.attach_file),
                     onPressed: (() {
                       playpressedSound();
-                      singleimageFile(ImageSource.gallery);
+                      pickmultipleImages();
                     })),
-                onLongPress: (() {
-                  playpressedVibration();
-                  pickmultipleImages();
-                }),
                 /* onTap: (()=> singleimageFile(ImageSource.gallery)),*/
               ),
               (file != null || multiimagespath.isNotEmpty) && !isUploading
@@ -156,10 +154,18 @@ class _UploadPageState extends State<UploadPage> {
         jsonCredentials = json;
       });
     }
-    /*final response = await api?.save(Imagename, _imageBytes);*/
-    /*onlinedoclicks.add(GoogleCloudDocumentaiV1GcsDocument(
-        gcsUri: response?.downloadLink.toString()));*/
-    treatedDoc = await treatSingledocument(_imageBytes,
+    final response = await api?.save(Imagename, _imageBytes);
+
+    Fluttertoast.showToast(
+      msg: "Image Charger et en cours de traitement",
+      textColor: Colors.white,
+      backgroundColor: Colors.greenAccent,
+      fontSize: 10.0,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.CENTER,
+    );
+    //treatedDoc;
+    await treatSingledocument(_imageBytes,
         Imagename); /*.catchError((e) {
       Fluttertoast.showToast(
         msg: "Une Erreur est survenu",
@@ -173,19 +179,11 @@ class _UploadPageState extends State<UploadPage> {
         isUploading = false;
       });
     });*/
-    Fluttertoast.showToast(
-      msg: "Image Charger et en cours de traitement",
-      textColor: Colors.white,
-      backgroundColor: Colors.greenAccent,
-      fontSize: 10.0,
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.CENTER,
-    );
+
     setState(() {
       isUploading = false;
     });
     /*singleDocUri = response?.downloadLink.toString();*/
-    parseDocument(treatedDoc);
   }
 
   _sendMultipleImage() async {
@@ -217,11 +215,13 @@ class _UploadPageState extends State<UploadPage> {
       List<String> UriList = uri!.split("?");
       String imgname = imagesname[counter];
       onlinedoclicks.add(GoogleCloudDocumentaiV1GcsDocument(
-          gcsUri: "gs://$bucketname/$imgname",
+          gcsUri: "gs://$bucketname/$imageSpaces/$imgname",
           mimeType: lookupMimeType(imagesname[counter])));
       counter++;
     }
+
     print(onlinedoclicks[0].gcsUri);
+
     counter = 0;
     treatedDocs = await treatMultipledocument().catchError((e) {
       print(e);
@@ -307,49 +307,102 @@ class _UploadPageState extends State<UploadPage> {
     return multiimages;
   }
 
+  editText(int index) {
+    String defaultname = imagesname[index];
+    final nameEditor = TextEditingController(text: defaultname);
+    return showDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+              title: const Text("Renommer le fichier"),
+              actions: [
+                Material(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(
+                      initialValue: defaultname.isEmpty ? null : defaultname,
+                      controller: defaultname.isEmpty ? nameEditor : null,
+                      maxLength: 40,
+                      validator: (value) {
+                        if (value!.length <= 4) {
+                          return "Entrer le nom de l'image";
+                        } else if (value.contains("/")) {
+                          return "Le nom ne doit pas contenir le caractere /";
+                        }
+                        return null;
+                      },
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      onFieldSubmitted: (newname) {
+                        setState(() {
+                          imagesname.removeAt(index);
+                          imagesname.insert(index, newname);
+                        });
+                        Navigator.pop(context);
+                      },
+                      decoration: const InputDecoration(
+                        icon: Icon(Icons.edit),
+                        //errorText: "Longeur Limite atteinte !",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ));
+  }
+
   Widget createViewImage(File image, int index) {
     String defaultname = imagesname[index];
     final nameEditor = TextEditingController(text: defaultname);
-    return Card(
-        //color: Colors.blueAccent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: Colors.blueAccent),
-        ),
-        margin: const EdgeInsets.all(10),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(6.0),
-                child: FadeInImage(
+    return Container(
+      decoration: const BoxDecoration(color: Colors.white),
+      child: Card(
+          //color: Colors.blueAccent,
+          /*shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: Colors.blueAccent),
+          ),*/
+          margin: const EdgeInsets.all(10),
+          child: Hero(
+            tag: const Text(
+              "data",
+              overflow: TextOverflow.fade,
+            ),
+            child: Material(
+              child: Stack(children: [
+                FadeInImage(
                     fit: BoxFit.fill,
                     placeholder:
                         const AssetImage("assets/upload_images/no_user.jpg"),
                     image: FileImage(image)),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextFormField(
-                  initialValue: defaultname.isEmpty ? null : defaultname,
-                  controller: defaultname.isEmpty ? nameEditor : null,
-                  maxLength: 40,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  onFieldSubmitted: (newname) {
-                    imagesname.removeAt(index);
-                    imagesname.insert(index, newname);
-                  },
-                  decoration: const InputDecoration(
-                    //errorText: "Longeur Limite atteinte !",
-                    border: OutlineInputBorder(),
-                  ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      height: 40,
+                      width: 200,
+                      color: const Color.fromARGB(92, 0, 98, 255),
+                      child: Text(defaultname,
+                          overflow: TextOverflow.fade,
+                          style: const TextStyle(
+                            fontSize: 15.0,
+                            fontWeight: FontWeight.bold,
+                          )),
+                    ),
+                    Container(
+                      color: Colors.black87,
+                      child: Center(
+                          child: IconButton(
+                              onPressed: (() => editText(index)),
+                              icon: const Icon(Icons.edit,
+                                  color: Colors.blueAccent))),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ));
+              ]),
+            ),
+          )),
+    );
   }
 
   Widget changedisplay() {
@@ -395,13 +448,6 @@ class _UploadPageState extends State<UploadPage> {
               size: 200, color: Color.fromARGB(255, 168, 168, 168)),
         ),
       );
-    }
-  }
-
-  parseDocument(GoogleCloudDocumentaiV1ProcessResponse? singleDoc) {
-    if (singleDoc != null) {
-      imagesResults = singleDoc.document?.text?.split("\n");
-      print(imagesResults);
     }
   }
 }
