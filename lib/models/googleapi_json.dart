@@ -25,24 +25,24 @@ class BatchOp {
       );
 
   factory BatchOp.fromMap(Map<String?, dynamic> json) => BatchOp(
-        pages: json["pages"] == null
-            ? null
-            : List<Page>.from(json["pages"].map((x) => Page.fromMap(x))),
-        shardInfo: json["shardInfo"] == null
-            ? null
-            : ShardInfo.fromMap(json["shardInfo"]),
-        text: json["text"],
-        uri: json["uri"],
+        pages: json.containsKey("pages")
+            ? List<Page>.from(json["pages"].map((x) => Page.fromMap(x)))
+            : null,
+        shardInfo: json.containsKey("shardInfo")
+            ? ShardInfo.fromMap(json["shardInfo"])
+            : null,
+        text: json.containsKey('text') ? json['text'] as String : null,
+        uri: json.containsKey('uri') ? json['uri'] as String : null,
       );
 
-  Map<String?, dynamic> toMap() => {
+  /*Map<String?, dynamic> toMap() => {
         "pages": pages == null
             ? null
             : List<dynamic>.from(pages!.map((x) => x.toMap())),
         "shardInfo": shardInfo == null ? null : shardInfo!.toMap(),
         "text": text,
         "uri": uri,
-      };
+      };*/
 }
 
 class Page {
@@ -95,20 +95,20 @@ class Page {
         tokens: tokens ?? this.tokens,
       );
 
-  factory Page.fromMap(Map<String?, dynamic> json) => Page(
-        blocks: json["blocks"] == null
-            ? null
-            : List<Block>.from(json["blocks"].map((x) => Block.fromMap(x))),
-        detectedLanguages: json["detectedLanguages"] == null
-            ? null
-            : List<DetectedLanguage>.from(json["detectedLanguages"]
-                .map((x) => DetectedLanguage.fromMap(x))),
-        dimension: json["dimension"] == null
-            ? null
-            : Dimension.fromMap(json["dimension"]),
+  factory Page.fromMap(Map<String, dynamic> json) => Page(
+        blocks: json.containsKey("blocks")
+            ? List<Block>.from(json["blocks"].map((x) => Block.fromMap(x)))
+            : null,
+        detectedLanguages: json.containsKey("detectedLanguages")
+            ? List<DetectedLanguage>.from(json["detectedLanguages"]
+                .map((x) => DetectedLanguage.fromMap(x)))
+            : null,
+        dimension: json.containsKey('dimension')
+            ? Dimension.fromMap(json["dimension"])
+            : null,
         image: json["image"] == null ? null : Image.fromMap(json["image"]),
         layout:
-            json["layout"] == null ? null : PageLayout.fromMap(json["layout"]),
+            json.containsKey('layout') ? PageLayout.fromMap(json["layout"]) : null,
         lines: json["lines"] == null
             ? null
             : List<Line>.from(json["lines"].map((x) => Line.fromMap(x))),
@@ -116,15 +116,15 @@ class Page {
         paragraphs: json["paragraphs"] == null
             ? null
             : List<Block>.from(json["paragraphs"].map((x) => Block.fromMap(x))),
-        tables: json["tables"] == null
-            ? null
-            : List<Table>.from(json["tables"].map((x) => Table.fromMap(x))),
+        tables: json.containsKey('tables')
+            ? List<Table>.from(json["tables"].map((x) => Table.fromMap(x)))
+            : null,
         tokens: json["tokens"] == null
             ? null
             : List<Token>.from(json["tokens"].map((x) => Token.fromMap(x))),
       );
 
-  Map<String?, dynamic> toMap() => {
+  /*Map<String?, dynamic> toMap() => {
         "blocks": blocks == null
             ? null
             : List<dynamic>.from(blocks!.map((x) => x.toMap())),
@@ -147,7 +147,7 @@ class Page {
         "tokens": tokens == null
             ? null
             : List<dynamic>.from(tokens!.map((x) => x.toMap())),
-      };
+      };*/
 }
 
 class Block {
@@ -297,7 +297,7 @@ final orientationValues = EnumValues({"PAGE_UP": Orientation.PAGE_UP});
 
 class PurpleTextAnchor {
   List<PurpleTextSegment>? textSegments;
-  
+
   PurpleTextAnchor({
     this.textSegments,
   });
@@ -648,9 +648,9 @@ class Table {
       );
 
   factory Table.fromMap(Map<String?, dynamic> json) => Table(
-        bodyRows: json["bodyRows"] == null
-            ? null
-            : List<Row>.from(json["bodyRows"].map((x) => Row.fromMap(x))),
+        bodyRows: json.containsKey('bodyRows')
+            ? List<Row>.from(json["bodyRows"].map((x) => Row.fromMap(x)))
+            : null,
         headerRows: json["headerRows"] == null
             ? null
             : List<Row>.from(json["headerRows"].map((x) => Row.fromMap(x))),

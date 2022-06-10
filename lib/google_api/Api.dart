@@ -438,7 +438,7 @@ String customtextanchortotext(gjson.PurpleTextAnchor textAnchor, String s) {
       response += s.substring(startindex, endindex);
     }
   }
-  print(textAnchor.textSegments);
+  //print(textAnchor.textSegments);
 
   return response.trim().replaceAll("\n", " ");
 }
