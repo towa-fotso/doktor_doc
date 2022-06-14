@@ -1,3 +1,5 @@
+// ignore_for_file: file_names
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -13,7 +15,7 @@ String? bucketname; //= "test_buket";
 String resultSpace = "data";
 String imageSpaces = "images";
 List<String> bucketlistings = [];
-List BactchOpResults = [];
+List bactchOpResults = [];
 String jsonCredentials = "";
 List<List<String>>? headerrowvalues;
 List<List<String>>? bodyrowvalues;
@@ -52,7 +54,7 @@ class CloudApi {
     //TODO save to bucket
     final timestamp = DateTime.now().microsecondsSinceEpoch;
     var type = lookupMimeType(name);
-    return await bucket.writeBytes(imageSpaces + "/" + name, imgbytes,
+    return await bucket.writeBytes("$imageSpaces/$name", imgbytes,
         metadata: ObjectMetadata(contentType: type, custom: {
           'timestamp': '$timestamp',
         }));
@@ -85,18 +87,18 @@ treatSingledocument(Uint8List imgByte, String name) async {
         lookupMimeType(name),
   );
 
-  GoogleCloudDocumentaiV1Processor documentaiV1Processor;
+  /* GoogleCloudDocumentaiV1Processor documentaiV1Processor;
   documentaiV1Processor = await docApi.projects.locations.processors
       .get(processorpath)
-      .catchError((e) => print(e));
-  print(documentaiV1Processor.displayName);
+      .catchError((e) => print(e));*/
+  //print(documentaiV1Processor.displayName);
   GoogleCloudDocumentaiV1ProcessRequest request;
   request = GoogleCloudDocumentaiV1ProcessRequest(
       inlineDocument: singledoc, skipHumanReview: true);
   GoogleCloudDocumentaiV1ProcessResponse response;
   response = await docApi.projects.locations.processors
       .process(request, processorpath)
-      .catchError((e) => print(e));
+      .catchError((e) => e);
   //print(response.document?.text);
   //Processedpages = response.document!.pages;
 
@@ -157,33 +159,33 @@ Future<GoogleLongrunningOperation> treatMultipledocument() async {
 }
 
 Future<List<String>?> retrieveProccessedData() async {
-  final auth.ServiceAccountCredentials _credentials;
-  auth.AutoRefreshingAuthClient? _client;
-  _credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
+  final auth.ServiceAccountCredentials credentials;
+  auth.AutoRefreshingAuthClient? client;
+  credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
 
   // ignore: todo
   //TODO Create a client
-  _client ??=
-      await auth.clientViaServiceAccount(_credentials, Storage.SCOPES).timeout(
+  client ??=
+      await auth.clientViaServiceAccount(credentials, Storage.SCOPES).timeout(
     const Duration(minutes: 2),
     onTimeout: () {
-      _client = null;
+      client = null;
       const SnackBar(
         content: Text("Connexion au serveur Expirer"),
         duration: Duration(seconds: 20),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(10))),
       );
-      return _client!;
+      return client!;
     },
-  ).catchError((_client) {
-    _client = null;
-    return _client;
+  ).catchError((client) {
+    client = null;
+    return client;
   });
 
   // ignore: todo
   //TODO Instantiate objects to cloud storage
-  var storage = Storage(_client!, 'doktor-doc-346016');
+  var storage = Storage(client!, 'doktor-doc-346016');
 
   // print(_client.credentials.scopes);
 
@@ -197,7 +199,7 @@ Future<List<String>?> retrieveProccessedData() async {
           bucketname!,
           predefinedAcl: PredefinedAcl.private,
         )
-        .catchError((e) => print(e));
+        .catchError((e) => e);
   }
 
 //Retrieve Root Bucket
@@ -221,17 +223,17 @@ Future<List<String>?> retrieveProccessedData() async {
 }
 
 Future<String?> downloadfile(String fileUrl, String displaydataname) async {
-  final auth.ServiceAccountCredentials _credentials;
-  auth.AutoRefreshingAuthClient? _client;
-  _credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
+  final auth.ServiceAccountCredentials credentials;
+  auth.AutoRefreshingAuthClient? client;
+  credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
 
   // ignore: todo
   //TODO Create a client
-  _client ??= await auth.clientViaServiceAccount(_credentials, Storage.SCOPES);
+  client ??= await auth.clientViaServiceAccount(credentials, Storage.SCOPES);
 
   // ignore: todo
   //TODO Instantiate objects to cloud storage
-  var storage = Storage(_client, 'doktor-doc-346016');
+  var storage = Storage(client, 'doktor-doc-346016');
 
   /// Checking if the bucket exists and if it doesn't it creates it.
   bool checkbucket = await storage.bucketExists(bucketname!);
@@ -258,17 +260,17 @@ Future<String?> downloadfile(String fileUrl, String displaydataname) async {
 }
 
 Future deleteFile(String name, bool isimage) async {
-  final auth.ServiceAccountCredentials _credentials;
-  auth.AutoRefreshingAuthClient? _client;
-  _credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
+  final auth.ServiceAccountCredentials credentials;
+  auth.AutoRefreshingAuthClient? client;
+  credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
 
   // ignore: todo
   //TODO Create a client
-  _client ??= await auth.clientViaServiceAccount(_credentials, Storage.SCOPES);
+  client ??= await auth.clientViaServiceAccount(credentials, Storage.SCOPES);
 
   // ignore: todo
   //TODO Instantiate objects to cloud storage
-  var storage = Storage(_client, 'doktor-doc-346016');
+  var storage = Storage(client, 'doktor-doc-346016');
 
   /// Checking if the bucket exists and if it doesn't it creates it.
   bool checkbucket = await storage.bucketExists(bucketname!);
@@ -287,33 +289,33 @@ Future deleteFile(String name, bool isimage) async {
 }
 
 Future<List<String>?> retrieveLoadedImages() async {
-  final auth.ServiceAccountCredentials _credentials;
-  auth.AutoRefreshingAuthClient? _client;
-  _credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
+  final auth.ServiceAccountCredentials credentials;
+  auth.AutoRefreshingAuthClient? client;
+  credentials = auth.ServiceAccountCredentials.fromJson(jsonCredentials);
 
   // ignore: todo
   //TODO Create a client
-  _client ??=
-      await auth.clientViaServiceAccount(_credentials, Storage.SCOPES).timeout(
+  client ??=
+      await auth.clientViaServiceAccount(credentials, Storage.SCOPES).timeout(
     const Duration(minutes: 2),
     onTimeout: () {
-      _client = null;
+      client = null;
       const SnackBar(
         content: Text("Connexion au serveur Expirer"),
         duration: Duration(seconds: 20),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(10))),
       );
-      return _client!;
+      return client!;
     },
-  ).catchError((_client) {
-    _client = null;
-    return _client;
+  ).catchError((client) {
+    client = null;
+    return client;
   });
 
   // ignore: todo
   //TODO Instantiate objects to cloud storage
-  var storage = Storage(_client!, 'doktor-doc-346016');
+  var storage = Storage(client!, 'doktor-doc-346016');
 
   // print(_client.credentials.scopes);
 
@@ -327,7 +329,7 @@ Future<List<String>?> retrieveLoadedImages() async {
           bucketname!,
           predefinedAcl: PredefinedAcl.private,
         )
-        .catchError((e) => print(e));
+        .catchError((e) => e);
   }
 
 //Retrieve Root Bucket
@@ -370,18 +372,18 @@ Future<GoogleCloudDocumentaiV1ProcessResponse> treatClouddocument(
     uri: "gs://$bucketname/$imageSpaces/$name",
   );
 
-  GoogleCloudDocumentaiV1Processor documentaiV1Processor;
+  /*GoogleCloudDocumentaiV1Processor documentaiV1Processor;
   documentaiV1Processor = await docApi.projects.locations.processors
       .get(processorpath)
-      .catchError((e) => print(e));
-  print(documentaiV1Processor.displayName);
+      .catchError((e) => e);*/
+  //print(documentaiV1Processor.displayName);
   GoogleCloudDocumentaiV1ProcessRequest request;
   request = GoogleCloudDocumentaiV1ProcessRequest(
       inlineDocument: singledoc, skipHumanReview: true);
   GoogleCloudDocumentaiV1ProcessResponse response;
   response = await docApi.projects.locations.processors
       .process(request, processorpath)
-      .catchError((e) => print(e));
+      .catchError((e) => e);
   //print(response.document?.text);
 
   return response;
@@ -389,13 +391,13 @@ Future<GoogleCloudDocumentaiV1ProcessResponse> treatClouddocument(
 
 gettabledata(List<GoogleCloudDocumentaiV1DocumentPageTableTableRow>? headerRows,
     String s) {
-  List<List<String>?>? allvalues;
+  List<List<String>> allvalues = [];
   for (var row in headerRows!) {
-    List<String>? currentRowValues;
+    List<String> currentRowValues = [];
     for (var cell in row.cells!) {
-      currentRowValues!.add(textanchortotext(cell.layout!.textAnchor, s));
-      allvalues!.add(currentRowValues);
+      currentRowValues.add(textanchortotext(cell.layout!.textAnchor, s));
     }
+    allvalues.add(currentRowValues);
   }
   return allvalues;
 }
@@ -405,12 +407,18 @@ textanchortotext(
   String response = "";
   int? startindex;
   int? endindex;
-  for (var segment in textAnchor!.textSegments!) {
-    if (segment.startIndex != null) startindex = int.parse(segment.startIndex!);
-    if (segment.endIndex != null) endindex = int.parse(segment.endIndex!);
-    response += s.substring(startindex!, endindex);
+  if (textAnchor!.textSegments != null) {
+    for (var segment in textAnchor.textSegments!) {
+      if (segment.startIndex != null) {
+        startindex = int.parse(segment.startIndex!);
+      } else {
+        startindex = 0;
+      }
+      if (segment.endIndex != null) endindex = int.parse(segment.endIndex!);
+      response += s.substring(startindex, endindex);
+    }
   }
-  return response.trim().replaceAll("\n", "");
+  return response.trim().replaceAll("\n", "").replaceAll("\r", "");
 }
 
 List<List<String>> customgettabledata(List<gjson.Row>? headerRows, String s) {
@@ -433,12 +441,13 @@ String customtextanchortotext(gjson.PurpleTextAnchor textAnchor, String s) {
     for (var segment in textAnchor.textSegments!) {
       if (segment.startIndex != null) {
         startindex = int.parse(segment.startIndex!);
+      } else {
+        startindex = 0;
       }
       if (segment.endIndex != null) endindex = int.parse(segment.endIndex!);
       response += s.substring(startindex, endindex);
     }
   }
-  //print(textAnchor.textSegments);
 
-  return response.trim().replaceAll("\n", " ");
+  return response.trim().replaceAll("\n", " ").replaceAll("\r", "");
 }

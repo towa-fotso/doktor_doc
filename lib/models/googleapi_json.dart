@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 class BatchOp {
   BatchOp({
     this.pages,
@@ -35,14 +37,12 @@ class BatchOp {
         uri: json.containsKey('uri') ? json['uri'] as String : null,
       );
 
-  /*Map<String?, dynamic> toMap() => {
-        "pages": pages == null
-            ? null
-            : List<dynamic>.from(pages!.map((x) => x.toMap())),
-        "shardInfo": shardInfo == null ? null : shardInfo!.toMap(),
-        "text": text,
-        "uri": uri,
-      };*/
+  Map<String, dynamic> toMap() => {
+        if (pages != null) 'pages': pages!,
+        if (shardInfo != null) 'shardInfo': shardInfo!,
+        if (text != null) 'text': text!,
+        if (uri != null) 'uri': uri!,
+      };
 }
 
 class Page {
@@ -107,8 +107,9 @@ class Page {
             ? Dimension.fromMap(json["dimension"])
             : null,
         image: json["image"] == null ? null : Image.fromMap(json["image"]),
-        layout:
-            json.containsKey('layout') ? PageLayout.fromMap(json["layout"]) : null,
+        layout: json.containsKey('layout')
+            ? PageLayout.fromMap(json["layout"])
+            : null,
         lines: json["lines"] == null
             ? null
             : List<Line>.from(json["lines"].map((x) => Line.fromMap(x))),
@@ -124,30 +125,18 @@ class Page {
             : List<Token>.from(json["tokens"].map((x) => Token.fromMap(x))),
       );
 
-  /*Map<String?, dynamic> toMap() => {
-        "blocks": blocks == null
-            ? null
-            : List<dynamic>.from(blocks!.map((x) => x.toMap())),
-        "detectedLanguages": detectedLanguages == null
-            ? null
-            : List<dynamic>.from(detectedLanguages!.map((x) => x.toMap())),
-        "dimension": dimension == null ? null : dimension!.toMap(),
-        "image": image == null ? null : image!.toMap(),
-        "layout": layout == null ? null : layout!.toMap(),
-        "lines": lines == null
-            ? null
-            : List<dynamic>.from(lines!.map((x) => x.toMap())),
-        "pageNumber": pageNumber,
-        "paragraphs": paragraphs == null
-            ? null
-            : List<dynamic>.from(paragraphs!.map((x) => x.toMap())),
-        "tables": tables == null
-            ? null
-            : List<dynamic>.from(tables!.map((x) => x.toMap())),
-        "tokens": tokens == null
-            ? null
-            : List<dynamic>.from(tokens!.map((x) => x.toMap())),
-      };*/
+  Map<String?, dynamic> toMap() => {
+        if (blocks != null) 'blocks': blocks!,
+        if (detectedLanguages != null) 'detectedLanguages': detectedLanguages!,
+        if (dimension != null) 'dimension': dimension!,
+        if (image != null) 'image': image!,
+        if (layout != null) 'layout': layout!,
+        if (lines != null) 'lines': lines!,
+        if (pageNumber != null) 'pageNumber': pageNumber!,
+        if (paragraphs != null) 'paragraphs': paragraphs!,
+        if (tables != null) 'tables': tables!,
+        if (tokens != null) 'tokens': tokens!,
+      };
 }
 
 class Block {
@@ -205,7 +194,7 @@ class BlockLayout {
             ? null
             : PurpleBoundingPoly.fromMap(json["boundingPoly"]),
         confidence:
-            json["confidence"] == null ? null : json["confidence"].toDouble(),
+            json.containsKey('confidence') ?  json["confidence"].toDouble():null ,
         orientation: json["orientation"] == null
             ? null
             : orientationValues.map![json["orientation"]],
@@ -281,8 +270,8 @@ class Vertex {
       );
 
   factory Vertex.fromMap(Map<String?, dynamic> json) => Vertex(
-        x: json["x"] == null ? null : json["x"].toDouble(),
-        y: json["y"] == null ? null : json["y"].toDouble(),
+        x: json.containsKey('x') ?  json["x"].toDouble():null ,
+        y: json.containsKey('y') ?  json["y"].toDouble():null ,
       );
 
   Map<String?, dynamic> toMap() => {
@@ -296,7 +285,7 @@ enum Orientation { PAGE_UP }
 final orientationValues = EnumValues({"PAGE_UP": Orientation.PAGE_UP});
 
 class PurpleTextAnchor {
-  List<PurpleTextSegment>? textSegments;
+  List<PurpleTextSegment>? textSegments =[];
 
   PurpleTextAnchor({
     this.textSegments,
@@ -308,18 +297,16 @@ class PurpleTextAnchor {
         textSegments: textSegments ?? this.textSegments,
       );
 
-  factory PurpleTextAnchor.fromMap(Map<String?, dynamic> json) =>
+  factory PurpleTextAnchor.fromMap(Map<String, dynamic> json) =>
       PurpleTextAnchor(
-        textSegments: json["textSegments"] == null
-            ? null
-            : List<PurpleTextSegment>.from(
-                json["textSegments"].map((x) => PurpleTextSegment.fromMap(x))),
+        textSegments: json.containsKey('textSegments')
+            ? List<PurpleTextSegment>.from(json["textSegments"]
+                .map((x) => PurpleTextSegment.fromMap(x))).toList()
+            : null,
       );
 
   Map<String?, dynamic> toMap() => {
-        "textSegments": textSegments == null
-            ? null
-            : List<dynamic>.from(textSegments!.map((x) => x.toMap())),
+        if (textSegments != null) 'textSegments': textSegments!,
       };
 }
 
@@ -341,15 +328,18 @@ class PurpleTextSegment {
         startIndex: startIndex ?? this.startIndex,
       );
 
-  factory PurpleTextSegment.fromMap(Map<String?, dynamic> json) =>
+  factory PurpleTextSegment.fromMap(Map<String, dynamic> json) =>
       PurpleTextSegment(
-        endIndex: json["endIndex"],
-        startIndex: json["startIndex"],
+        endIndex:
+            json.containsKey('endIndex') ? json['endIndex'] as String : null,
+        startIndex: json.containsKey('startIndex')
+            ? json['startIndex'] as String
+            : null,
       );
 
   Map<String?, dynamic> toMap() => {
-        "endIndex": endIndex,
-        "startIndex": startIndex,
+        if (endIndex != null) 'endIndex': endIndex!,
+        if (startIndex != null) 'startIndex': startIndex!,
       };
 }
 
@@ -651,21 +641,19 @@ class Table {
         bodyRows: json.containsKey('bodyRows')
             ? List<Row>.from(json["bodyRows"].map((x) => Row.fromMap(x)))
             : null,
-        headerRows: json["headerRows"] == null
-            ? null
-            : List<Row>.from(json["headerRows"].map((x) => Row.fromMap(x))),
-        layout:
-            json["layout"] == null ? null : CellLayout.fromMap(json["layout"]),
+        headerRows: json.containsKey('headerRows')
+            ? List<Row>.from(json["headerRows"].map((x) => Row.fromMap(x)))
+            : null,
+        layout: json.containsKey('layout')
+            ? CellLayout.fromMap(json["layout"])
+            : null,
       );
 
-  Map<String?, dynamic> toMap() => {
-        "bodyRows": bodyRows == null
-            ? null
-            : List<dynamic>.from(bodyRows!.map((x) => x.toMap())),
-        "headerRows": headerRows == null
-            ? null
-            : List<dynamic>.from(headerRows!.map((x) => x.toMap())),
-        "layout": layout == null ? null : layout!.toMap(),
+  Map<String, dynamic> toMap() => {
+        if (bodyRows != null) 'bodyRows': bodyRows!,
+        //if (detectedLanguages != null) 'detectedLanguages': detectedLanguages!,
+        if (headerRows != null) 'headerRows': headerRows!,
+        if (layout != null) 'layout': layout!,
       };
 }
 
@@ -683,16 +671,15 @@ class Row {
         cells: cells ?? this.cells,
       );
 
-  factory Row.fromMap(Map<String?, dynamic> json) => Row(
-        cells: json["cells"] == null
-            ? null
-            : List<Cell>.from(json["cells"].map((x) => Cell.fromMap(x))),
+  factory Row.fromMap(Map<String, dynamic> json) => Row(
+        cells: json.containsKey('cells')
+            ? List<Cell>.from(json["cells"].map((x) => Cell.fromMap(x)))
+                .toList()
+            : null,
       );
 
-  Map<String?, dynamic> toMap() => {
-        "cells": cells == null
-            ? null
-            : List<dynamic>.from(cells!.map((x) => x.toMap())),
+  Map<String, dynamic> toMap() => {
+        if (cells != null) 'cells': cells!,
       };
 }
 
@@ -720,8 +707,9 @@ class Cell {
 
   factory Cell.fromMap(Map<String?, dynamic> json) => Cell(
         colSpan: json["colSpan"],
-        layout:
-            json["layout"] == null ? null : CellLayout.fromMap(json["layout"]),
+        layout: json.containsKey('layout')
+            ? CellLayout.fromMap(json["layout"])
+            : null,
         rowSpan: json["rowSpan"],
       );
 
@@ -762,22 +750,22 @@ class CellLayout {
         boundingPoly: json["boundingPoly"] == null
             ? null
             : FluffyBoundingPoly.fromMap(json["boundingPoly"]),
-        confidence:
-            json["confidence"] == null ? null : json["confidence"].toDouble(),
+        confidence: json.containsKey('confidence')
+            ? (json["confidence"] as num).toDouble()
+            : null,
         orientation: json["orientation"] == null
             ? null
             : orientationValues.map![json["orientation"]],
-        textAnchor: json["textAnchor"] == null
-            ? null
-            : PurpleTextAnchor.fromMap(json["textAnchor"]),
+        textAnchor: json.containsKey('textAnchor')
+            ? PurpleTextAnchor.fromMap(json["textAnchor"])
+            : null,
       );
 
   Map<String?, dynamic> toMap() => {
-        "boundingPoly": boundingPoly == null ? null : boundingPoly!.toMap(),
-        "confidence": confidence,
-        "orientation":
-            orientation == null ? null : orientationValues.reverse[orientation],
-        "textAnchor": textAnchor == null ? null : textAnchor!.toMap(),
+        if (boundingPoly != null) 'boundingPoly': boundingPoly!,
+        if (confidence != null) 'confidence': confidence!,
+        if (orientation != null) 'orientation': orientation!,
+        if (textAnchor != null) 'textAnchor': textAnchor!,
       };
 }
 
@@ -910,9 +898,7 @@ class EnumValues<T> {
   EnumValues(this.map);
 
   Map<T, String?> get reverse {
-    if (reverseMap == null) {
-      reverseMap = map!.map((k, v) => new MapEntry(v, k));
-    }
+    reverseMap ??= map!.map((k, v) => MapEntry(v, k));
     return reverseMap!;
   }
 }

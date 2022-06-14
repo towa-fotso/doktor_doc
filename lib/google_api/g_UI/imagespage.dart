@@ -2,7 +2,6 @@ import 'package:docteur_doc/google_api/Api.dart';
 import 'package:docteur_doc/google_api/systemEvents.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:docteur_doc/google_api/excelOps.dart';
 import 'package:googleapis/documentai/v1.dart';
 
 class ImagePage extends StatefulWidget {
@@ -191,11 +190,11 @@ class _ImagePageState extends State<ImagePage> {
                                 onPressed: (() async {
                                   playpressedVibration();
                                   playpressedSound();
-                                  var result;
+                                  
                                   setState(() {
                                     deleting = true;
                                   });
-                                  result = await deleteFile(data, true);
+                                  await deleteFile(data, true);
 
                                   setState(() {
                                     deleting = false;

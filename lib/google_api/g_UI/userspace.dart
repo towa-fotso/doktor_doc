@@ -1,3 +1,5 @@
+// ignore_for_file: import_of_legacy_library_into_null_safe
+
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:custom_navigator/custom_navigator.dart';
 import 'package:docteur_doc/google_api/filesStored.dart';
@@ -7,6 +9,7 @@ import 'package:docteur_doc/google_api/g_UI/upload_UI.dart';
 import 'package:flutter/material.dart';
 
 class UserSpace extends StatefulWidget {
+  // ignore: use_key_in_widget_constructors
   const UserSpace({Key? key});
 
   @override
@@ -15,7 +18,7 @@ class UserSpace extends StatefulWidget {
 
 class _UserSpaceState extends State<UserSpace> {
   //Keys Used for navigation between pages
-  GlobalKey _bottomNavigationKey = GlobalKey();
+  final GlobalKey _bottomNavigationKey = GlobalKey();
   GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   Page _page = const Page("Traitements");
@@ -37,7 +40,7 @@ class _UserSpaceState extends State<UserSpace> {
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20)),
               gradient: LinearGradient(
-                  colors: [Colors.blueAccent, Colors.lightBlueAccent],
+                  colors:[Colors.blueAccent, Colors.lightBlueAccent],
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter)),
         ),
@@ -106,7 +109,8 @@ class _UserSpaceState extends State<UserSpace> {
 
 class Page extends StatefulWidget {
   final String title;
-  const Page(this.title) : assert(title != null);
+  // ignore: use_key_in_widget_constructors
+  const Page(this.title);
 
   @override
   State<Page> createState() => _PageState();

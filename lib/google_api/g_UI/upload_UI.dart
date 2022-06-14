@@ -1,6 +1,7 @@
+// ignore_for_file: file_names
+
 import 'dart:typed_data';
 
-import 'package:docteur_doc/google_api/excelOps.dart';
 import 'package:docteur_doc/google_api/systemEvents.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,7 @@ class _UploadPageState extends State<UploadPage> {
 
   bool imageloading = false;
   bool multipleselection = false;
-  String Imagename = "";
+  String imagename = "";
   var file;
   bool isUploading = false;
   bool uploaded = false;
@@ -48,7 +49,7 @@ class _UploadPageState extends State<UploadPage> {
     if (response.isEmpty) {
       setState(() {
         file = File(pickedFile!.path);
-        Imagename = pickedFile.name;
+        imagename = pickedFile.name;
         _imageBytes = file.readAsBytesSync();
       });
     } else if (response.file != null) {
@@ -94,11 +95,11 @@ class _UploadPageState extends State<UploadPage> {
                     splashColor: const Color.fromARGB(255, 0, 255, 132),
                     foregroundColor: const Color.fromARGB(255, 255, 255, 255),
                     backgroundColor: Colors.blueAccent,
-                    child: const Icon(Icons.attach_file),
                     onPressed: (() {
                       playpressedSound();
                       pickmultipleImages();
-                    })),
+                    }),
+                    child: const Icon(Icons.attach_file)),
                 /* onTap: (()=> singleimageFile(ImageSource.gallery)),*/
               ),
               (file != null || multiimagespath.isNotEmpty) && !isUploading
@@ -132,11 +133,11 @@ class _UploadPageState extends State<UploadPage> {
                 splashColor: const Color.fromARGB(255, 0, 255, 132),
                 foregroundColor: const Color.fromARGB(255, 255, 255, 255),
                 backgroundColor: Colors.blueAccent,
-                child: const Icon(Icons.camera),
                 onPressed: (() {
                   playpressedSound();
                   singleimageFile(ImageSource.camera);
                 }),
+                child: const Icon(Icons.camera),
               ),
             ],
           ),
@@ -154,7 +155,7 @@ class _UploadPageState extends State<UploadPage> {
         jsonCredentials = json;
       });
     }
-    final response = await api?.save(Imagename, _imageBytes);
+    await api?.save(imagename, _imageBytes);
 
     Fluttertoast.showToast(
       msg: "Image Charger et en cours de traitement",
@@ -166,7 +167,7 @@ class _UploadPageState extends State<UploadPage> {
     );
     //treatedDoc;
     await treatSingledocument(_imageBytes,
-        Imagename); /*.catchError((e) {
+        imagename); /*.catchError((e) {
       Fluttertoast.showToast(
         msg: "Une Erreur est survenu",
         textColor: Colors.white,
@@ -197,10 +198,9 @@ class _UploadPageState extends State<UploadPage> {
     }
     int counter = 0;
     for (var image in multiimages) {
-      final response =
-          await api?.save(imagesname[counter], image).catchError((e) {
+      await api?.save(imagesname[counter], image).catchError((e) {
         Fluttertoast.showToast(
-          msg: imagesname[counter] + " non charger",
+          msg: "${imagesname[counter]} non charger",
           textColor: Colors.white,
           backgroundColor: const Color.fromARGB(255, 244, 2, 2),
           fontSize: 10.0,
@@ -211,8 +211,6 @@ class _UploadPageState extends State<UploadPage> {
           isUploading = false;
         });
       });
-      String? uri = response?.downloadLink.toString();
-      List<String> UriList = uri!.split("?");
       String imgname = imagesname[counter];
       onlinedoclicks.add(GoogleCloudDocumentaiV1GcsDocument(
           gcsUri: "gs://$bucketname/$imageSpaces/$imgname",
@@ -220,11 +218,11 @@ class _UploadPageState extends State<UploadPage> {
       counter++;
     }
 
-    print(onlinedoclicks[0].gcsUri);
+    //print(onlinedoclicks[0].gcsUri);
 
     counter = 0;
     treatedDocs = await treatMultipledocument().catchError((e) {
-      print(e);
+      // print(e);
       Fluttertoast.showToast(
         msg: "Echec lors du Traitement",
         textColor: Colors.white,
@@ -352,7 +350,6 @@ class _UploadPageState extends State<UploadPage> {
 
   Widget createViewImage(File image, int index) {
     String defaultname = imagesname[index];
-    final nameEditor = TextEditingController(text: defaultname);
     return Container(
       decoration: const BoxDecoration(color: Colors.white),
       child: Card(

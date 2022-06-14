@@ -1,8 +1,9 @@
+// ignore_for_file: file_names, depend_on_referenced_packages
+
 import 'dart:io';
 import 'package:docteur_doc/google_api/Api.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:googleapis/documentai/v1.dart';
 import 'package:path/path.dart';
 import 'package:excel/excel.dart';
 import 'package:path_provider/path_provider.dart';
@@ -11,7 +12,6 @@ import 'package:simple_animations/simple_animations.dart';
 final filename = TextEditingController();
 final numcol = TextEditingController();
 final _formKey = GlobalKey<FormState>();
-bool _isBatch = false;
 List<String>? imagesResults = [];
 String folderName = "Doktor_doc";
 int row = 0;
@@ -22,7 +22,7 @@ Future<String?> insertInfo(List<List<String>>? headerrowvalues,
 
   int datalength = 1;
   excel ??= Excel.createExcel();
-  print(headerrowvalues);
+  //print(headerrowvalues);
   Sheet sheet = excel[imagename];
 
   sheet.appendRow(headerrowvalues![headerrowvalues.length - 1]);
@@ -60,7 +60,7 @@ Future<String?> insertInfo(List<List<String>>? headerrowvalues,
   /// Saving the excel file
   var filebytes = excel.save();
   var filePath = await createFolderInAppDocDir().catchError((e) {
-    print(e);
+    return e;
   });
   File(join("$filePath/$imagename.xlsx"))
     ..createSync(recursive: true)
@@ -74,19 +74,19 @@ Future<String> createFolderInAppDocDir() async {
   String folderName = "Doktor_doc";
   //Get this App Document Directory
 
-  final Directory? _appDocDir = await getExternalStorageDirectory();
+  final Directory? appDocDir = await getExternalStorageDirectory();
   //App Document Directory + folder name
-  final Directory _appDocDirFolder =
-      Directory('${_appDocDir?.path}/$folderName/');
+  final Directory appDocDirFolder =
+      Directory('${appDocDir?.path}/$folderName/');
 
-  if (await _appDocDirFolder.exists()) {
+  if (await appDocDirFolder.exists()) {
     //if folder already exists return path
-    return _appDocDirFolder.path;
+    return appDocDirFolder.path;
   } else {
     //if folder not exists create folder and then return its path
-    final Directory _appDocDirNewFolder =
-        await _appDocDirFolder.create(recursive: true);
-    return _appDocDirNewFolder.path;
+    final Directory appDocDirNewFolder =
+        await appDocDirFolder.create(recursive: true);
+    return appDocDirNewFolder.path;
   }
 }
 
@@ -99,10 +99,11 @@ Future<List<FileSystemEntity>?> getDir() async {
     _folders = myDir.listSync(recursive: true, followLinks: false);
   } else {
     //if folder not exists create folder and then return list of sub files
-    final Directory _appDocDirNewFolder = await myDir.create(recursive: true);
+    final Directory appDocDirNewFolder = await myDir.create(recursive: true);
     _folders = myDir.listSync(recursive: true, followLinks: false);
   }
   _folders?.forEach((FileSystemEntity file) {
+    // ignore: avoid_print
     print(file.path);
   });
   return _folders;
@@ -141,8 +142,8 @@ Future dialog(
                     child: InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       child: const CircleAvatar(
-                        child: Icon(Icons.close),
                         backgroundColor: Colors.black,
+                        child: Icon(Icons.close),
                       ),
                     ),
                   ),
@@ -194,7 +195,6 @@ Future dialog(
                                 primary: Colors.lime[600]),
                             child: const Text("Valider"),
                             onPressed: () {
-                              int col = int.parse(numcol.text);
                               if (_formKey.currentState!.validate()) {
                                 localfilename = filename.text;
                                 Navigator.of(context).pop();

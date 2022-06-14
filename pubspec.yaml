@@ -49,6 +49,8 @@ dependencies:
   path_provider: ^2.0.10
   simple_animations: ^4.0.2
   open_file: ^3.2.1
+  progress_indicators: ^1.0.0
+  introduction_screen: ^3.0.2
   
 
 dev_dependencies:
@@ -60,7 +62,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^1.0.0
+  flutter_lints: ^2.0.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -78,6 +80,7 @@ flutter:
     - assets/upload_images/
     - assets/upload_images/credentials.json
     - assets/upload_images/ClientViaService.json
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
@@ -90,10 +93,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
+  fonts:
+    - family: Lobster
+      fonts:
+      - asset: font/Lobster-Regular.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro

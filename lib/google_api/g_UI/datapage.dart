@@ -2,7 +2,6 @@ import 'package:docteur_doc/google_api/Api.dart';
 import 'package:docteur_doc/google_api/systemEvents.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:docteur_doc/google_api/excelOps.dart';
 
 class Datapage extends StatefulWidget {
   const Datapage({Key? key}) : super(key: key);
@@ -172,7 +171,6 @@ class _DatapageState extends State<Datapage> {
                                 onPressed: (() async {
                                   playpressedVibration();
                                   playpressedSound();
-                                  String text;
                                   setState(() {
                                     download = true;
                                   });
@@ -195,11 +193,11 @@ class _DatapageState extends State<Datapage> {
                                 onPressed: (() async {
                                   playpressedVibration();
                                   playpressedSound();
-                                  var result;
+                                  
                                   setState(() {
                                     deleting = true;
                                   });
-                                  result = await deleteFile(data, false);
+                                  await deleteFile(data, false);
                                   setState(() {});
                                   setState(() {
                                     deleting = false;
